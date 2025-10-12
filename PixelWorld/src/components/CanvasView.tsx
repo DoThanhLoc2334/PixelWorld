@@ -3,19 +3,22 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
 
-export default function CanvasView()
-{
+export default function CanvasView() {
     const canvasRef = useRef<HTMLDivElement>(null);
 
-    useEffect(()=> {
-        if(!canvasRef.current) 
-            return;
-        const app = createPixiApp(canvasRef.current);
+    useEffect(() => {
+        if (!canvasRef.current) return;
+
+        let app: any;
+        
+        (async () => {
+            app = await createPixiApp(canvasRef.current!);
+        })();
 
         return () => {
-            app.destroy(true, { children: true });
+            if (app) app.destroy(true, { children: true });
         };
     }, []);
 
-    return <div ref={canvasRef} style={{ width: "100%", height: "100%"}} />;
+    return <div ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 }
