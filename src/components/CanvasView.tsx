@@ -2,6 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
+import 'pixi.js'
+import { Graphics } from "pixi.js";
+
+
+
 
 export default function CanvasView() {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -9,16 +14,21 @@ export default function CanvasView() {
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        let app: any;
+        let app : any;
         
         (async () => {
             app = await createPixiApp(canvasRef.current!);
         })();
+        
 
         return () => {
             if (app) app.destroy(true, { children: true });
         };
     }, []);
 
-    return <div ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
+    return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
+        
+    </div>
+    );
 }
+
