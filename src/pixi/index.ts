@@ -2,6 +2,7 @@
 
 import * as PIXI from "pixi.js";
 
+
 export async function createPixiApp(container: HTMLDivElement) {
     const app = new PIXI.Application();
 
