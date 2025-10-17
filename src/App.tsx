@@ -12,9 +12,9 @@ extend({
 
 
 function App(){
-  let parentref = useRef(null);
   return (
-    <div ref={parentref} style={{ width: "100vw", height: "100vh" }}>
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <CanvasView></CanvasView>
     </div>
   )
 }

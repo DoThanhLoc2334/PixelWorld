@@ -13,7 +13,7 @@ export async function createPixiApp(container: HTMLDivElement) {
         antialias: true,
     });
 
-    let cell = new Graphics().rect(0,0,50,50).fill('red');
+
     container.appendChild(app.canvas);
     return app;
 }

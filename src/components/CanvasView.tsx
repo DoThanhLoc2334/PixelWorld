@@ -3,19 +3,18 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
 import 'pixi.js'
-import { Graphics } from "pixi.js";
+import { Application, Graphics } from "pixi.js";
 
 
 
 
 export default function CanvasView() {
     const canvasRef = useRef<HTMLDivElement>(null);
-
+        let cell = new Graphics().rect(0,0,50,50).fill('red');
     useEffect(() => {
         if (!canvasRef.current) return;
-        let cell = new Graphics().rect(0,0,50,50).fill('red');
+
         let app : any;
-        
         (async () => {
             app = await createPixiApp(canvasRef.current!);
         })();
