@@ -14,7 +14,7 @@ export default function CanvasView() {
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        let app : any;
+        let app : Application;
         (async () => {
             app = await createPixiApp(canvasRef.current!);
         })();
@@ -22,6 +22,7 @@ export default function CanvasView() {
 
         return () => {
             if (app) app.destroy(true, { children: true });
+            app.canvas.remove();
         };
     }, []);
 
