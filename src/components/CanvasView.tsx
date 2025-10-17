@@ -13,7 +13,7 @@ export default function CanvasView() {
 
     useEffect(() => {
         if (!canvasRef.current) return;
-
+        let cell = new Graphics().rect(0,0,50,50).fill('red');
         let app : any;
         
         (async () => {
