@@ -19,7 +19,7 @@ export default function CanvasView() {
             app.stage.addChild(stage);
         })();
 
-
+        console.log("Fired");
 
         return () => {
             if (app) app.destroy(true, { children: true });
