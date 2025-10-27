@@ -3,6 +3,7 @@ import CanvasView from './components/CanvasView'
 
 import {Container, Graphics} from "pixi.js"
 import { useRef, useCallback } from 'react'
+
 // import {Application, extend} from '@pixi/react'
 
 
