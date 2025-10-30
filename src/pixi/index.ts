@@ -1,6 +1,7 @@
 /// create pixi application
 
 import * as PIXI from "pixi.js";
+import { Viewport } fronm "pixi-viewport";
 // import {Graphics} from 'pixi.js'
 
 
