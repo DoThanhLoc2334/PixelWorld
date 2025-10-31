@@ -30,15 +30,22 @@ export default function CanvasView() {
             //stage.addChild(cell);
             app.stage.addChild(stage);
         })();
+        
 
         console.log("Fired");
 
         return () => {
-            if (app) app.destroy(true, { children: true });
+            if (app) {
+                app.destroy(true, { children: true });
+                app.canvas.remove();
+            }
         };
     }, []);
 
-    return <div ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
+    return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
+        
+    </div>
+    );
 }
 function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
     if (argument === undefined || argument === null) {
