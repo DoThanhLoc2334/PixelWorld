@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
-import { Application } from "pixi.js";
+import { Application, Container, Graphics } from "pixi.js"
 
 
 
@@ -10,14 +10,21 @@ import { Application } from "pixi.js";
 export default function CanvasView()
 {
     const canvasRef = useRef<HTMLDivElement>(null);
+    let stage = new Container();
+    let cell = new Graphics().rect(500, 50, 50, 50).fill('red');
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        let app : Application;
+        let app: Application;
+
         (async () => {
             app = await createPixiApp(canvasRef.current!);
+            stage.addChild(cell);
+            app.stage.addChild(stage);
         })();
         
+
+        console.log("Fired");
 
         return () => {
             if (app) {
