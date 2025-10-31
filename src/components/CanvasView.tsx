@@ -3,12 +3,9 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
 import { Application, Container, Graphics } from "pixi.js"
-
-
-
-
-export default function CanvasView()
-{
+let stage = new Container();
+const gridlength = 50;
+export default function CanvasView() {
     const canvasRef = useRef<HTMLDivElement>(null);
     let stage = new Container();
     let cell = new Graphics().rect(500, 50, 50, 50).fill('red');
@@ -39,4 +36,37 @@ export default function CanvasView()
     </div>
     );
 }
+function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
+    if (argument === undefined || argument === null) {
+        throw new TypeError(message);
+    }
 
+    return argument;
+}
+class cellwrapper extends Graphics {
+    indexX: number;
+    indexY: number;
+
+
+    constructor(indexX: number, indexY: number) {
+        super();
+        this.indexX = indexX;
+        this.indexY = indexY;
+    }
+}
+
+function CreateCell(xindex: number, yindex: number, length: number, color: string) {
+    let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
+    cell.eventMode = 'static';
+    cell.cursor = 'pointer';
+    cell.on('pointerdown', (eventype) => {
+        console.log(eventype.currentTarget);
+        let selectedcell = eventype.currentTarget as cellwrapper;
+        let x = selectedcell.indexX;
+        let y = selectedcell.indexY; 
+        eventype.currentTarget.destroy();
+        let cell = CreateCell(x, y, gridlength, 'blue');
+        stage.addChild(cell);
+    });
+    return cell;
+}
