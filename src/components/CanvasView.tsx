@@ -2,17 +2,20 @@
 
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
-import { Application, Container, Graphics, State } from "pixi.js"
-
+import { Application, Container, Graphics } from "pixi.js"
+let stage = new Container();
+const gridlength = 50;
 export default function CanvasView() {
     const canvasRef = useRef<HTMLDivElement>(null);
-    let stage = new Container();
-    let cell = new Graphics().rect(500, 50, 50, 50).fill('red');
+    
+    
     let emptygrid = new Array(20);
+
     emptygrid.forEach((element) => { element = new Array(20) });
     for (let i = 0; i < 20; i++) {
         for (let j = 0; j < 20; j++) {
-            let cell = new Graphics().rect(j * 50, i * 50, 50, 50).fill('red');
+            //let cell = new cellwrapper(j, i).rect(j * gridlength, i * gridlength, gridlength, gridlength).fill('red');
+            let cell = CreateCell(j, i, gridlength, 'red');    
             stage.addChild(cell);
         }
     }
@@ -43,4 +46,31 @@ function ensure<T>(argument: T | undefined | null, message: string = 'This value
     }
 
     return argument;
+}
+class cellwrapper extends Graphics {
+    indexX: number;
+    indexY: number;
+
+
+    constructor(indexX: number, indexY: number) {
+        super();
+        this.indexX = indexX;
+        this.indexY = indexY;
+    }
+}
+
+function CreateCell(xindex: number, yindex: number, length: number, color: string) {
+    let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
+    cell.eventMode = 'static';
+    cell.cursor = 'pointer';
+    cell.on('pointerdown', (eventype) => {
+        console.log(eventype.currentTarget);
+        let selectedcell = eventype.currentTarget as cellwrapper;
+        let x = selectedcell.indexX;
+        let y = selectedcell.indexY; 
+        eventype.currentTarget.destroy();
+        let cell = CreateCell(x, y, gridlength, 'blue');
+        stage.addChild(cell);
+    });
+    return cell;
 }
