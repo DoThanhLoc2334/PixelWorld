@@ -22,21 +22,14 @@ export default function CanvasView()
             stage.addChild(cell);
             app.stage.addChild(stage);
         })();
-        
 
         console.log("Fired");
 
         return () => {
-            if (app) {
-                app.destroy(true, { children: true });
-                app.canvas.remove();
-            }
+            if (app) app.destroy(true, { children: true });
         };
     }, []);
 
-    return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
-        
-    </div>
-    );
+    return <div ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 }
 
