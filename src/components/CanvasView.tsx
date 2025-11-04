@@ -43,9 +43,6 @@ export default function CanvasView() {
             stage.wheel()
             stage.decelerate();
 
-
-
-
             for (let i = 0; i < 20; i++) {
                 for (let j = 0; j < 20; j++) {
                     let cell = CreateCell(j, i, gridlength, 'red');
@@ -53,11 +50,8 @@ export default function CanvasView() {
                 }
             }
 
-
-            //stage.addChild(cell);
             app.stage.addChild(stage);
         })();
-
 
         console.log("Fired");
 
