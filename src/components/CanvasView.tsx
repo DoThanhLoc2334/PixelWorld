@@ -1,6 +1,7 @@
 // Component React show canvas and manage Pixi App"
 
 import { useEffect, useRef } from "react";
+import {socket} from "../../frontend/socket";
 import { createPixiApp } from "../pixi";
 import { Application, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
@@ -19,10 +20,22 @@ export default function CanvasView() {
 
 
     useEffect(() => {
+        // Socket event listeners
+        socket.on("connect", () => {
+            console.log("Connected to PixelWord!");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("Server disconnected");
+        });
+
+        // Connect to server if not already connected
+        if (!socket.connected) {
+            socket.connect();
+        }
+
         if (!canvasRef.current) return;
-
         let app: Application;
-
         (async () => {
             app = await createPixiApp(canvasRef.current!);
 
@@ -51,11 +64,19 @@ export default function CanvasView() {
             }
 
             app.stage.addChild(stage);
+
+
         })();
 
         console.log("Fired");
 
+        // Cleanup function - runs when component unmounts
         return () => {
+            // Remove socket listeners
+            socket.off("connect");
+            socket.off("disconnect");
+            
+            // Cleanup Pixi app
             if (app) {
                 app.destroy(true, { children: true });
                 app.canvas.remove();
