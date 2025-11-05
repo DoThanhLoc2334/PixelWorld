@@ -1,7 +1,7 @@
 // Component React show canvas and manage Pixi App"
 
 import { useEffect, useRef } from "react";
-import {socket} from "../../frontend/socket";
+import {socket} from "../../server/socket";
 import { createPixiApp } from "../pixi";
 import { Application, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
