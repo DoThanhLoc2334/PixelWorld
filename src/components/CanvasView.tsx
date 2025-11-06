@@ -117,6 +117,9 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
         let selectedcell = eventype.currentTarget as cellwrapper;
         let x = selectedcell.indexX;
         let y = selectedcell.indexY;
+
+        socket.emit("cellClick", {x, y});
+
         eventype.currentTarget.destroy();
         let cell = CreateCell(x, y, gridlength, 'blue');
         stage.addChild(cell);
