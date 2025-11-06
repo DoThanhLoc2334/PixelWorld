@@ -21,11 +21,13 @@ io.on("connection", (socket) => {
 
     socket.on("cellClick", (data) => {
         console.log(`User ${socket.id} clicked cell:`, data);
+
+        socket.emit("serverMessage", {
+            message: `Server nhận được click tại ô (${data.x}, ${data.y})`
+        });
     });
 
-    socket.emit("serverMessage", {
-        message: `Server nhận được click tại ô (${data.x}, ${data.y})`
-    });
+
 
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
