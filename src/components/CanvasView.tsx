@@ -29,6 +29,10 @@ export default function CanvasView() {
             console.log("Server disconnected");
         });
 
+        socket.on("serverMessage", (data) => {
+            console.log("Message from Server:", data.message);
+        });
+
         // Connect to server if not already connected
         if (!socket.connected) {
             socket.connect();
