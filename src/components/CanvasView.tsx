@@ -4,18 +4,20 @@ import { createPixiApp } from "../pixi";
 import { Application, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 
+type CanvasViewProps = { selectedColor?: string };
 
 let stage: Viewport;
 
+let getSelectedColor = () => "#1e90ff";
+
 const gridlength = 50;
-export default function CanvasView() {
+export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
 
+    getSelectedColor = () => selectedColor;
 
     let emptygrid = new Array(20);
-
     emptygrid.forEach((element) => { element = new Array(20) });
-
 
     useEffect(() => {
         // Socket event listeners
@@ -62,8 +64,6 @@ export default function CanvasView() {
             }
 
             app.stage.addChild(stage);
-
-
         })();
 
         console.log("Fired");
@@ -83,21 +83,19 @@ export default function CanvasView() {
     }, []);
 
     return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
-
-    </div>
-    );
+    </div>);
 }
+
 function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
     if (argument === undefined || argument === null) {
         throw new TypeError(message);
     }
-
     return argument;
 }
+
 class cellwrapper extends Graphics {
     indexX: number;
     indexY: number;
-
 
     constructor(indexX: number, indexY: number) {
         super();
@@ -116,7 +114,7 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
         let x = selectedcell.indexX;
         let y = selectedcell.indexY;
         eventype.currentTarget.destroy();
-        let cell = CreateCell(x, y, gridlength, 'blue');
+        let cell = CreateCell(x, y, gridlength, getSelectedColor());
         stage.addChild(cell);
     });
     return cell;
