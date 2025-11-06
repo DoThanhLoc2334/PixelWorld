@@ -1,125 +1,151 @@
-// Component React show canvas and manage Pixi App"
-
+// CanvasView.tsx
 import { useEffect, useRef } from "react";
-import {socket} from "../../server/socket";
+import { socket } from "../../server/socket";
 import { createPixiApp } from "../pixi";
-import { Application, Container, Graphics } from "pixi.js"
+import { Application, Graphics } from "pixi.js";
 import { Viewport } from "pixi-viewport";
 
+type CanvasViewProps = {
+  /** Màu hiện tại do người dùng chọn từ App (dạng "#RRGGBB") */
+  selectedColor?: string;
+};
 
-let stage: Viewport;
+const GRID_LENGTH = 50;
+const GRID_W = 20;
+const GRID_H = 20;
 
-const gridlength = 50;
-export default function CanvasView() {
-    const canvasRef = useRef<HTMLDivElement>(null);
+/** Chuyển "#RRGGBB" -> 0xRRGGBB cho Pixi */
+const cssToPixi = (css: string) => Number(`0x${css.replace("#", "")}`);
 
+class CellGraphic extends Graphics {
+  ix: number;
+  iy: number;
+  len: number;
 
-    let emptygrid = new Array(20);
+  constructor(ix: number, iy: number, len: number, color: number) {
+    super();
+    this.ix = ix;
+    this.iy = iy;
+    this.len = len;
+    this.eventMode = "static";
+    this.cursor = "pointer";
+    this.draw(color);
+  }
 
-    emptygrid.forEach((element) => { element = new Array(20) });
+  draw(color: number) {
+    const x = this.ix * this.len;
+    const y = this.iy * this.len;
+    this.clear();
+    this.rect(x, y, this.len, this.len).fill(color);
+  }
+}
 
+export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProps) {
+  const mountRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        // Socket event listeners
-        socket.on("connect", () => {
-            console.log("Connected to PixelWord!");
-        });
+  // Giữ màu hiện tại để handler trong Pixi luôn đọc được (không cần recreate app)
+  const colorRef = useRef<string>(selectedColor);
+  useEffect(() => {
+    colorRef.current = selectedColor;
+  }, [selectedColor]);
 
-        socket.on("disconnect", () => {
-            console.log("Server disconnected");
-        });
+  // Tham chiếu App & Viewport để cleanup
+  const appRef = useRef<Application | null>(null);
+  const viewportRef = useRef<Viewport | null>(null);
 
-        // Connect to server if not already connected
-        if (!socket.connected) {
-            socket.connect();
+  useEffect(() => {
+    // --- Socket ---
+    const onConnect = () => console.log("Connected to PixelWord!");
+    const onDisconnect = () => console.log("Server disconnected");
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    if (!socket.connected) socket.connect();
+
+    // --- Pixi Setup ---
+    if (!mountRef.current) return;
+
+    let destroyed = false;
+    (async () => {
+      const app = await createPixiApp(mountRef.current!);
+      appRef.current = app;
+
+      // Nền renderer nếu muốn (bật nếu cần toàn nền canvas đỏ):
+      // app.renderer.background.color = 0x000000; // ví dụ đen
+      // app.renderer.background.alpha = 1;
+
+      const viewport = new Viewport({
+        screenWidth: app.renderer.width,
+        screenHeight: app.renderer.height,
+        worldWidth: GRID_W * GRID_LENGTH,
+        worldHeight: GRID_H * GRID_LENGTH,
+        events: app.renderer.events,
+      });
+      viewportRef.current = viewport;
+
+      viewport.drag().pinch().wheel().decelerate();
+      app.stage.addChild(viewport);
+
+      // KHỞI TẠO Ô = ĐỎ (giữ đỏ như ban đầu)
+      const INIT_RED = 0xff0000;
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const cell = new CellGraphic(x, y, GRID_LENGTH, INIT_RED);
+          // Click -> tô lại ô bằng màu đang chọn
+          cell.on("pointerdown", () => cell.draw(cssToPixi(colorRef.current)));
+          viewport.addChild(cell);
         }
+      }
 
-        if (!canvasRef.current) return;
-        let app: Application;
-        (async () => {
-            app = await createPixiApp(canvasRef.current!);
+      // Resize handler
+      const onResize = () => {
+        if (!appRef.current || !viewportRef.current) return;
+        const parent = mountRef.current!;
+        const w = parent.clientWidth || window.innerWidth;
+        const h = parent.clientHeight || window.innerHeight;
+        appRef.current.renderer.resize(w, h);
+        viewportRef.current.resize(w, h);
+      };
 
-            stage = new Viewport({
-                screenWidth: app.renderer.width,
-                screenHeight: app.renderer.height,
-                worldWidth: 5000,
-                worldHeight: 5000,
-                events: app.renderer.events,
-            })
+      // Lần đầu & lắng nghe resize
+      onResize();
+      window.addEventListener("resize", onResize);
 
-            stage.resize(app.screen.width, app.screen.height);
+      // Cleanup nội bộ async
+      const cleanup = () => {
+        window.removeEventListener("resize", onResize);
+        if (appRef.current) {
+          // Hủy cả cây stage
+          appRef.current.destroy(true, { children: true });
+          // Gỡ <canvas> nếu createPixiApp gắn vào DOM
+          (appRef.current as any).canvas?.remove?.();
+        }
+        appRef.current = null;
+        viewportRef.current = null;
+      };
 
-            app.stage.addChild(stage);
+      if (destroyed) cleanup();
+      else (appRef.current as any)._cleanup = cleanup;
+    })();
 
-            stage.drag()
-            stage.pinch()
-            stage.wheel()
-            stage.decelerate();
+    // --- Cleanup tổng ---
+    return () => {
+      destroyed = true;
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      // Hủy Pixi (nếu đã khởi tạo)
+      (appRef.current as any)?._cleanup?.();
+    };
+  }, []);
 
-            for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
-                    let cell = CreateCell(j, i, gridlength, 'red');
-                    stage.addChild(cell);
-                }
-            }
-
-            app.stage.addChild(stage);
-
-
-        })();
-
-        console.log("Fired");
-
-        // Cleanup function - runs when component unmounts
-        return () => {
-            // Remove socket listeners
-            socket.off("connect");
-            socket.off("disconnect");
-            
-            // Cleanup Pixi app
-            if (app) {
-                app.destroy(true, { children: true });
-                app.canvas.remove();
-            }
-        };
-    }, []);
-
-    return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
-
-    </div>
-    );
-}
-function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
-    if (argument === undefined || argument === null) {
-        throw new TypeError(message);
-    }
-
-    return argument;
-}
-class cellwrapper extends Graphics {
-    indexX: number;
-    indexY: number;
-
-
-    constructor(indexX: number, indexY: number) {
-        super();
-        this.indexX = indexX;
-        this.indexY = indexY;
-    }
-}
-
-function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
-    cell.eventMode = 'static';
-    cell.cursor = 'pointer';
-    cell.on('pointerdown', (eventype) => {
-        console.log(eventype.currentTarget);
-        let selectedcell = eventype.currentTarget as cellwrapper;
-        let x = selectedcell.indexX;
-        let y = selectedcell.indexY;
-        eventype.currentTarget.destroy();
-        let cell = CreateCell(x, y, gridlength, 'blue');
-        stage.addChild(cell);
-    });
-    return cell;
+  return (
+    <div
+      ref={mountRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        // Nếu muốn một màu nền CSS ngoài lưới (không ảnh hưởng ô): bật dòng dưới
+        // background: "#ff0000",
+      }}
+    />
+  );
 }
