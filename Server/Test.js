@@ -17,7 +17,7 @@ for (let i = 0; i < 20; i++) {
 
 let gridjson = JSON.stringify(grid);
 
-fs.writeFile('C:\\Users\\Bumchic\\Documents\\GitHub\\PixelWorld\\Server\\grid.txt', gridjson, err => { if (err) { console.log(err); } });
+fs.writeFile('C:\\Users\\doloc\\OneDrive\\Documents\\GitHub\\PixelWorld\\Server\\grid.txt', gridjson, err => { if (err) { console.log(err); } });
 
 const server = http.createServer((req, res) => {
     if (req.method == 'GET') {
