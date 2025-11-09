@@ -17,6 +17,13 @@ export async function createPixiApp(container: HTMLDivElement) {
 
 
     container.appendChild(app.canvas);
+    // Ensure canvas stays behind UI overlays (toolbars) and fills the container
+    app.canvas.style.position = 'absolute';
+    app.canvas.style.top = '0';
+    app.canvas.style.left = '0';
+    app.canvas.style.width = '100%';
+    app.canvas.style.height = '100%';
+    app.canvas.style.zIndex = '0';
 
     // const viewport = new Viewport({
     //     screenWidth: app.renderer.width,
