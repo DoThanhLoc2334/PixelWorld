@@ -1,9 +1,5 @@
 /// create pixi application
-
 import * as PIXI from "pixi.js";
-import { Viewport } from "pixi-viewport";
-
-
 export async function createPixiApp(container: HTMLDivElement) {
     container.querySelectorAll("canvas").forEach(c => c.remove());
 
@@ -13,7 +9,6 @@ export async function createPixiApp(container: HTMLDivElement) {
         backgroundColor: 0xffffff,
         resizeTo: window,
     });
-
 
     container.appendChild(app.canvas);
     // Ensure canvas stays behind UI overlays (toolbars) and fills the container

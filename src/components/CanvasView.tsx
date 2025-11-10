@@ -5,16 +5,14 @@ import { Application, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 
 type CanvasViewProps = { selectedColor?: string };
-
 let stage: Viewport;
-
 let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
 let cellMap: Graphics[][] = [];
+
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
-
     useEffect(() => {
         if (!canvasRef.current) return;
         let app: Application;
@@ -43,7 +41,6 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
                 socket.connect();
             }
         })();
-
         console.log("Fired");
 
         return () => {
@@ -92,11 +89,9 @@ function registerSocketListeners() {
     });
 
     // update khi co nguoi doi mau
-
     socket.on("updateCell", ({ x, y, color }) => {
         const cell = cellMap[y][x];
         if (!cell) return;
-    
         // update cell khi nhan duoc update tu server(co the tu client khac hoac chinh ban than)
         updateCellColor(cell, x, y, color);
     })
