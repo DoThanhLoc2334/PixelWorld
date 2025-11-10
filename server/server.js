@@ -12,6 +12,13 @@ const io = new Server(server, {
     },
 });
 
+const gridSize = 50;
+const gridCols = Math.floor(1920 / gridSize);
+const gridRows = Math.floor(1080 / gridSize);
+let grid = Array.from({length: gridRows}, () => 
+    Array(gridCols).fill("#4f0707")
+);
+
 app.get("/", (req, res) => {
     res.send("PixelWorld server is running!")
 });
@@ -19,11 +26,17 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
     console.log(" A user connected: ", socket.id);
 
-    socket.on("cellClick", (data) => {
-        console.log(`User ${socket.id} clicked cell:`, data);
+    socket.emit("initGrid", grid); // gui toan bo grid khi client moi vao
 
+    socket.on("cellClick", (data) => {
+        const {x, y, color} = data;
+        console.log(`User ${socket.id} clicked cell (${x}, ${y}) -> ${color}`);
+
+        grid[y][x] = color;
+
+        io.emit("updateCell", {x, y, color}); 
         socket.emit("serverMessage", {
-            message: `Server nhận được click tại ô (${data.x}, ${data.y})`
+            message: `Server nhận được click tại ô (${data.x}, ${data.y}, ${color})`
         });
     });
 
