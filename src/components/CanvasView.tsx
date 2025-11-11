@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import {socket} from "../../server/socket";
+//import {socket} from "../../server/socket";
 import { createPixiApp } from "../pixi";
 import { Application, Color, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
@@ -22,18 +22,18 @@ export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProp
 
     useEffect(() => {
         // Socket event listeners
-        socket.on("connect", () => {
-            console.log("Connected to PixelWord!");
-        });
+        // socket.on("connect", () => {
+        //     console.log("Connected to PixelWord!");
+        // });
 
-        socket.on("disconnect", () => {
-            console.log("Server disconnected");
-        });
+        // socket.on("disconnect", () => {
+        //     console.log("Server disconnected");
+        // });
 
-        // Connect to server if not already connected
-        if (!socket.connected) {
-            socket.connect();
-        }
+        // // Connect to server if not already connected
+        // if (!socket.connected) {
+        //     socket.connect();
+        // }
 
         if (!canvasRef.current) return;
         let app: Application;
@@ -63,7 +63,7 @@ export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProp
             });
             for (let i = 0; i < 20; i++) {
                 for (let j = 0; j < 20; j++) {
-                    let cell = CreateCell(j, i, gridlength, ColorDictionary[grid[i][j]]);
+                    let cell = CreateCell(j, i, gridlength, grid[i][j]);
                     stage.addChild(cell);
                 }
             }
@@ -76,8 +76,8 @@ export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProp
         // Cleanup function - runs when component unmounts
         return () => {
             // Remove socket listeners
-            socket.off("connect");
-            socket.off("disconnect");
+            // socket.off("connect");
+            // socket.off("disconnect");
             
             // Cleanup Pixi app
             if (app) {
@@ -101,16 +101,18 @@ function ensure<T>(argument: T | undefined | null, message: string = 'This value
 class cellwrapper extends Graphics {
     indexX: number;
     indexY: number;
-
-    constructor(indexX: number, indexY: number) {
+    color: number;
+    constructor(indexX: number, indexY: number, color:number) {
         super();
         this.indexX = indexX;
         this.indexY = indexY;
+        this.color = color;
     }
 }
 
-function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
+function CreateCell(xindex: number, yindex: number, length: number, color: number) {
+    let colorstr = ColorDictionary[color];
+    let cell = new cellwrapper(xindex, yindex, color).rect(xindex * length, yindex * length, length, length).fill(colorstr);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
     cell.on('pointerdown', (eventype) => {
@@ -118,9 +120,16 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
         let selectedcell = eventype.currentTarget as cellwrapper;
         let x = selectedcell.indexX;
         let y = selectedcell.indexY;
+        let postcell ={
+            indexX : x,
+            indexY: y,
+            color: 1
+        }
+        let postcelljson = JSON.stringify(postcell);
+        console.log(postcelljson);
         eventype.currentTarget.destroy();
-        axios.post('http://localhost:8080', 'hello').then(response => {console.log(response)});
-        let cell = CreateCell(x, y, gridlength, getSelectedColor());
+        axios.post('http://localhost:8080', postcelljson).then(response => {console.log(response)});
+        let cell = CreateCell(x, y, gridlength, 1);
         stage.addChild(cell);
     });
     return cell;
