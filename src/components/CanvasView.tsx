@@ -1,40 +1,20 @@
 import { useEffect, useRef } from "react";
-import {socket} from "../../server/socket";
+import { socket } from "../socket";
 import { createPixiApp } from "../pixi";
 import { Application, Color, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import axios from 'axios'
 
 type CanvasViewProps = { selectedColor?: string };
-
 let stage: Viewport;
-
 let getSelectedColor = () => "#1e90ff";
+const gridSize = 50;
+let cellMap: Graphics[][] = [];
 
-let ColorDictionary = Array();
-ColorDictionary.push('red');
-ColorDictionary.push('blue');
-const gridlength = 50;
-export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProps) {
+export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
-
     getSelectedColor = () => selectedColor;
-
     useEffect(() => {
-        // Socket event listeners
-        socket.on("connect", () => {
-            console.log("Connected to PixelWord!");
-        });
-
-        socket.on("disconnect", () => {
-            console.log("Server disconnected");
-        });
-
-        // Connect to server if not already connected
-        if (!socket.connected) {
-            socket.connect();
-        }
-
         if (!canvasRef.current) return;
         let app: Application;
         let grid = Array(20);
@@ -58,28 +38,22 @@ export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProp
             stage.pinch()
             stage.wheel()
             stage.decelerate();
-            await axios.get('http://localhost:8080').then((response) => {
-                grid = response.data;
-            });
-            for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
-                    let cell = CreateCell(j, i, gridlength, ColorDictionary[grid[i][j]]);
-                    stage.addChild(cell);
-                }
-            }
-            app.stage.addChild(stage);
-        })();
-        
 
+            registerSocketListeners();
+            if (!socket.connected) {
+                socket.connect();
+            }
+        })();
         console.log("Fired");
 
-        // Cleanup function - runs when component unmounts
         return () => {
-            // Remove socket listeners
             socket.off("connect");
             socket.off("disconnect");
-            
-            // Cleanup Pixi app
+            socket.off("initGrid");
+            socket.off("updateCell");
+            socket.off("serverMessage");
+            socket.off("connect_error");
+
             if (app) {
                 app.destroy(true, { children: true });
                 app.canvas.remove();
@@ -89,6 +63,45 @@ export default function CanvasView({ selectedColor = "#1e90ff" }: CanvasViewProp
 
     return (<div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
     </div>);
+}
+
+function registerSocketListeners() {
+    // Socket event listeners   
+    socket.on("connect", () => {
+        console.log("Connected to PixelWord!");
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Server disconnected");
+    });
+
+    socket.on("initGrid", (serverGrid) => {
+        console.log("Received full grid from server");
+        const rows = serverGrid.length;
+        const cols = serverGrid[0].length;
+
+        cellMap = Array.from({ length: rows }, () => Array(cols));
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const color = serverGrid[y][x] || "#4f0707";
+                const cell = CreateCell(x, y, gridSize, color);
+                cellMap[y][x] = cell;
+                stage.addChild(cell);
+            }
+        }
+    });
+
+    // update khi co nguoi doi mau
+    socket.on("updateCell", ({ x, y, color }) => {
+        const cell = cellMap[y][x];
+        if (!cell) return;
+        // update cell khi nhan duoc update tu server(co the tu client khac hoac chinh ban than)
+        updateCellColor(cell, x, y, color);
+    })
+
+    socket.on("serverMessage", (data) => {
+        console.log("Message from Server:", data.message);
+    });
 }
 
 function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
@@ -109,19 +122,22 @@ class cellwrapper extends Graphics {
     }
 }
 
+function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
+    if (!cell) return;
+    cell.clear();
+    cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
+}
+
 function CreateCell(xindex: number, yindex: number, length: number, color: string) {
     let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
-    cell.on('pointerdown', (eventype) => {
-        console.log(eventype.currentTarget);
-        let selectedcell = eventype.currentTarget as cellwrapper;
-        let x = selectedcell.indexX;
-        let y = selectedcell.indexY;
-        eventype.currentTarget.destroy();
-        axios.post('http://localhost:8080', 'hello').then(response => {console.log(response)});
-        let cell = CreateCell(x, y, gridlength, getSelectedColor());
-        stage.addChild(cell);
+    cell.on('pointerdown', () => {
+        const newColor = getSelectedColor();
+         // optimistic update: update ngay lap tuc ma khong can phan hoi tu server
+        updateCellColor(cell, xindex, yindex, newColor);
+        // sau khi update thi emit toi server
+        socket.emit("cellClick", { x: xindex, y: yindex, color: newColor });
     });
     return cell;
 }
