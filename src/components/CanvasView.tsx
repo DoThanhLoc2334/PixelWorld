@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { socket } from "../socket";
 import { createPixiApp } from "../pixi";
 import { Application, Color, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
+import { io } from "socket.io-client";
 import axios from 'axios'
 
 type CanvasViewProps = { selectedColor?: string };
@@ -10,6 +10,10 @@ let stage: Viewport;
 let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
 let cellMap: Graphics[][] = [];
+const socket = io("http://localhost:3000", {
+    transports: ["websocket", "polling"], 
+    autoConnect: false, 
+});
 
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -52,19 +56,19 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             stage.pinch()
             stage.wheel()
             stage.decelerate();
-                        registerSocketListeners();
+            registerSocketListeners();
             if (!socket.connected) {
                 socket.connect();
             }
-            await axios.get('http://localhost:8080').then((response) => {
-                grid = response.data;
-            });
-            for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
-                    let cell = CreateCell(j, i, gridlength, grid[i][j]);
-                    stage.addChild(cell);
-                }
-            }
+            // await axios.get('http://localhost:8080').then((response) => {
+            //     grid = response.data;
+            // });
+            // for (let i = 0; i < 20; i++) {
+            //     for (let j = 0; j < 20; j++) {
+            //         let cell = CreateCell(j, i, gridSize, grid[i][j]);
+            //         stage.addChild(cell);
+            //     }
+            // }
             app.stage.addChild(stage);
 
 
@@ -100,7 +104,7 @@ function registerSocketListeners() {
         console.log("Server disconnected");
     });
 
-    socket.on("initGrid", (serverGrid) => {
+    socket.on("initGrid", (serverGrid:any[][]) => {
         console.log("Received full grid from server");
         const rows = serverGrid.length;
         const cols = serverGrid[0].length;
@@ -124,7 +128,7 @@ function registerSocketListeners() {
         updateCellColor(cell, x, y, color);
     })
 
-    socket.on("serverMessage", (data) => {
+    socket.on("serverMessage", (data: {message: string}) => {
         console.log("Message from Server:", data.message);
     });
 }
@@ -136,17 +140,7 @@ function ensure<T>(argument: T | undefined | null, message: string = 'This value
     return argument;
 }
 
-class cellwrapper extends Graphics {
-    indexX: number;
-    indexY: number;
-    color: number;
-    constructor(indexX: number, indexY: number, color:number) {
-        super();
-        this.indexX = indexX;
-        this.indexY = indexY;
-        this.color = color;
-    }
-}
+
 
 function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
     if (!cell) return;
@@ -155,33 +149,17 @@ function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
 }
 
 
-function CreateCell(xindex: number, yindex: number, length: number, color: number) {
-    let colorstr = ColorDictionary[color];
-    let cell = new cellwrapper(xindex, yindex, color).rect(xindex * length, yindex * length, length, length).fill(colorstr);
+function CreateCell(xindex: number, yindex: number, length: number, color: string) {
+    let cell = new Graphics().rect(xindex * length, yindex * length, length, length).fill(color);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
-    cell.on('pointerdown', (eventype) => {
-        console.log(eventype.currentTarget);
-        let selectedcell = eventype.currentTarget as cellwrapper;
-        let x = selectedcell.indexX;
-        let y = selectedcell.indexY;
-        let postcell ={
-            indexX : x,
-            indexY: y,
-            color: 1
-        }
-        let postcelljson = JSON.stringify(postcell);
-        console.log(postcelljson);
-        eventype.currentTarget.destroy();
-        axios.post('http://localhost:8080', postcelljson).then(response => {console.log(response)});
-        let cell = CreateCell(x, y, gridlength, 1);
+    cell.on('pointerdown', () => {
+        let x = xindex;
+        let y = yindex;
+        let newcolor = getSelectedColor();
+        updateCellColor(cell, x, y, newcolor)
         stage.addChild(cell);
-    // cell.on('pointerdown', () => {
-    //     const newColor = getSelectedColor();
-    //      // optimistic update: update ngay lap tuc ma khong can phan hoi tu server
-    //     updateCellColor(cell, xindex, yindex, newColor);
-    //     // sau khi update thi emit toi server
-    //     socket.emit("cellClick", { x: xindex, y: yindex, color: newColor });
+        socket.emit("cellClick", { x: x, y: y, color: newcolor });
     });
     return cell;
 }
