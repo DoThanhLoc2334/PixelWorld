@@ -15,6 +15,20 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
     useEffect(() => {
+        // Socket event listeners
+        // socket.on("connect", () => {
+        //     console.log("Connected to PixelWord!");
+        // });
+
+        // socket.on("disconnect", () => {
+        //     console.log("Server disconnected");
+        // });
+
+        // // Connect to server if not already connected
+        // if (!socket.connected) {
+        //     socket.connect();
+        // }
+
         if (!canvasRef.current) return;
         let app: Application;
         let grid = Array(20);
@@ -38,11 +52,22 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             stage.pinch()
             stage.wheel()
             stage.decelerate();
-
-            registerSocketListeners();
+                        registerSocketListeners();
             if (!socket.connected) {
                 socket.connect();
             }
+            await axios.get('http://localhost:8080').then((response) => {
+                grid = response.data;
+            });
+            for (let i = 0; i < 20; i++) {
+                for (let j = 0; j < 20; j++) {
+                    let cell = CreateCell(j, i, gridlength, grid[i][j]);
+                    stage.addChild(cell);
+                }
+            }
+            app.stage.addChild(stage);
+
+
         })();
         console.log("Fired");
 
@@ -114,11 +139,12 @@ function ensure<T>(argument: T | undefined | null, message: string = 'This value
 class cellwrapper extends Graphics {
     indexX: number;
     indexY: number;
-
-    constructor(indexX: number, indexY: number) {
+    color: number;
+    constructor(indexX: number, indexY: number, color:number) {
         super();
         this.indexX = indexX;
         this.indexY = indexY;
+        this.color = color;
     }
 }
 
@@ -128,16 +154,34 @@ function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
     cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
 }
 
-function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new cellwrapper(xindex, yindex).rect(xindex * length, yindex * length, length, length).fill(color);
+
+function CreateCell(xindex: number, yindex: number, length: number, color: number) {
+    let colorstr = ColorDictionary[color];
+    let cell = new cellwrapper(xindex, yindex, color).rect(xindex * length, yindex * length, length, length).fill(colorstr);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
-    cell.on('pointerdown', () => {
-        const newColor = getSelectedColor();
-         // optimistic update: update ngay lap tuc ma khong can phan hoi tu server
-        updateCellColor(cell, xindex, yindex, newColor);
-        // sau khi update thi emit toi server
-        socket.emit("cellClick", { x: xindex, y: yindex, color: newColor });
+    cell.on('pointerdown', (eventype) => {
+        console.log(eventype.currentTarget);
+        let selectedcell = eventype.currentTarget as cellwrapper;
+        let x = selectedcell.indexX;
+        let y = selectedcell.indexY;
+        let postcell ={
+            indexX : x,
+            indexY: y,
+            color: 1
+        }
+        let postcelljson = JSON.stringify(postcell);
+        console.log(postcelljson);
+        eventype.currentTarget.destroy();
+        axios.post('http://localhost:8080', postcelljson).then(response => {console.log(response)});
+        let cell = CreateCell(x, y, gridlength, 1);
+        stage.addChild(cell);
+    // cell.on('pointerdown', () => {
+    //     const newColor = getSelectedColor();
+    //      // optimistic update: update ngay lap tuc ma khong can phan hoi tu server
+    //     updateCellColor(cell, xindex, yindex, newColor);
+    //     // sau khi update thi emit toi server
+    //     socket.emit("cellClick", { x: xindex, y: yindex, color: newColor });
     });
     return cell;
 }
