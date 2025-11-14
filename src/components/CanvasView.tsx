@@ -3,7 +3,6 @@ import { createPixiApp } from "../pixi";
 import { Application, Color, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import { io } from "socket.io-client";
-import axios from 'axios'
 
 type CanvasViewProps = { selectedColor?: string };
 let stage: Viewport;
@@ -11,31 +10,18 @@ let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
 let cellMap: Graphics[][] = [];
 const socket = io("http://localhost:3000", {
-    transports: ["websocket", "polling"], 
-    autoConnect: false, 
+    transports: ["websocket", "polling"],
+    autoConnect: false,
 });
+
 
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
     useEffect(() => {
-        // Socket event listeners
-        // socket.on("connect", () => {
-        //     console.log("Connected to PixelWord!");
-        // });
-
-        // socket.on("disconnect", () => {
-        //     console.log("Server disconnected");
-        // });
-
-        // // Connect to server if not already connected
-        // if (!socket.connected) {
-        //     socket.connect();
-        // }
 
         if (!canvasRef.current) return;
         let app: Application;
-        let grid = Array(20);
 
         (async () => {
             app = await createPixiApp(canvasRef.current!);
@@ -56,19 +42,11 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             stage.pinch()
             stage.wheel()
             stage.decelerate();
-            registerSocketListeners();
-            if (!socket.connected) {
-                socket.connect();
-            }
-            // await axios.get('http://localhost:8080').then((response) => {
-            //     grid = response.data;
-            // });
-            // for (let i = 0; i < 20; i++) {
-            //     for (let j = 0; j < 20; j++) {
-            //         let cell = CreateCell(j, i, gridSize, grid[i][j]);
-            //         stage.addChild(cell);
-            //     }
+            // registerSocketListeners();
+            // if (!socket.connected) {
+            //     socket.connect();
             // }
+            RenderDebugGrid();
             app.stage.addChild(stage);
 
 
@@ -95,7 +73,6 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
 }
 
 function registerSocketListeners() {
-    // Socket event listeners   
     socket.on("connect", () => {
         console.log("Connected to PixelWord!");
     });
@@ -104,20 +81,9 @@ function registerSocketListeners() {
         console.log("Server disconnected");
     });
 
-    socket.on("initGrid", (serverGrid:any[][]) => {
+    socket.on("initGrid", (serverGrid: any[][]) => {
         console.log("Received full grid from server");
-        const rows = serverGrid.length;
-        const cols = serverGrid[0].length;
-
-        cellMap = Array.from({ length: rows }, () => Array(cols));
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const color = serverGrid[y][x] || "#4f0707";
-                const cell = CreateCell(x, y, gridSize, color);
-                cellMap[y][x] = cell;
-                stage.addChild(cell);
-            }
-        }
+        rendergrid(serverGrid);
     });
 
     // update khi co nguoi doi mau
@@ -128,19 +94,18 @@ function registerSocketListeners() {
         updateCellColor(cell, x, y, color);
     })
 
-    socket.on("serverMessage", (data: {message: string}) => {
+    socket.on("serverMessage", (data: { message: string }) => {
         console.log("Message from Server:", data.message);
     });
 }
 
-function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
-    if (argument === undefined || argument === null) {
-        throw new TypeError(message);
-    }
-    return argument;
+function RenderDebugGrid() {
+    const gridCols = 20;
+    const gridRows = 20;
+    let grid = Array.from({ length: gridRows }, () =>
+        Array(gridCols).fill("#4f0707"));
+    rendergrid(grid)
 }
-
-
 
 function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
     if (!cell) return;
@@ -149,17 +114,43 @@ function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
 }
 
 
-function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new Graphics().rect(xindex * length, yindex * length, length, length).fill(color);
-    cell.eventMode = 'static';
-    cell.cursor = 'pointer';
-    cell.on('pointerdown', () => {
-        let x = xindex;
-        let y = yindex;
-        let newcolor = getSelectedColor();
-        updateCellColor(cell, x, y, newcolor)
-        stage.addChild(cell);
-        socket.emit("cellClick", { x: x, y: y, color: newcolor });
-    });
-    return cell;
+// function CreateCell(xindex: number, yindex: number, length: number, color: string) {
+
+//     let cell = new Graphics().rect(xindex * length, yindex * length, length, length).fill(color);
+//     cell.cullable = true;
+//     cell.eventMode = 'static';
+//     cell.cursor = 'pointer';
+//     cell.on('pointerdown', () => {
+//         let x = xindex;
+//         let y = yindex;
+//         let newcolor = getSelectedColor();
+//         updateCellColor(cell, x, y, newcolor)
+//         stage.addChild(cell);
+//         socket.emit("cellClick", { x: x, y: y, color: newcolor });
+//     });
+//     return cell;
+// }
+function rendergrid(serverGrid: any[][]) {
+    const rows = serverGrid.length;
+    const cols = serverGrid[0].length;
+    let endrowcord = rows * gridSize;
+    let endcolcord = cols * gridSize;
+    let grid = new Graphics(); 
+    for(let i=0 ;i <= rows; i++)
+    {
+        grid.moveTo(i * gridSize, 0).lineTo(i * gridSize, endrowcord);
+        
+    }
+    for(let i=0 ;i <= cols; i++)
+    {
+        grid.moveTo(0, i * gridSize).lineTo(endcolcord, i * gridSize);
+    }
+
+    
+    
+
+// Stroke all lines in white with pixel-perfect width
+
+grid.stroke({ color: 'black', pixelLine: true });
+stage.addChild(grid);
 }

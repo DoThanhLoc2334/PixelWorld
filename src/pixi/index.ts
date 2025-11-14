@@ -8,6 +8,7 @@ export async function createPixiApp(container: HTMLDivElement) {
         antialias: true,
         backgroundColor: 0xffffff,
         resizeTo: window,
+        
     });
 
     container.appendChild(app.canvas);

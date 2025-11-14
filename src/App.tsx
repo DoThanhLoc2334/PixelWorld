@@ -6,7 +6,7 @@ export default function App() {
   const [color, setColor] = useState("#1e90ff");
 
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
+    <div style={{ width: "100%", height: "100%" }}>
       {/* Toolbar nổi cố định */}
       <div
         id="pw-toolbar"
