@@ -10,6 +10,12 @@ let stage: Viewport;
 let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
 let cellMap: Graphics[][] = [];
+let isPaiting = false;
+let lastPaintX = -1;
+let lastPaintY = -1;
+let lastEmitTime = 0;
+const min_emit_interval_ms = 30;
+
 const socket = io("http://localhost:3000", {
     transports: ["websocket", "polling"], 
     autoConnect: false, 
@@ -19,6 +25,24 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
     useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if(e.code === "Space"){
+                e.preventDefault();
+                isPaiting = true;
+            }
+        };
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            if(e.code === "Space") {
+                e.preventDefault();
+                isPaiting = false;
+                lastPaintX = -1;
+                lastPaintY = -1;
+            }
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp)
         // Socket event listeners
         // socket.on("connect", () => {
         //     console.log("Connected to PixelWord!");
@@ -76,6 +100,9 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
         console.log("Fired");
 
         return () => {
+            window.addEventListener("keydown", onKeyDown);
+            window.addEventListener("keyup", onKeyUp);
+
             socket.off("connect");
             socket.off("disconnect");
             socket.off("initGrid");
