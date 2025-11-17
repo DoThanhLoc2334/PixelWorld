@@ -63,7 +63,16 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
 
         (async () => {
             app = await createPixiApp(canvasRef.current!);
+            stage.on('pointermove', (e: any) => {
+                if(!isPaiting)
+                    return;
+                const global = e.data.global;
 
+                const world = stage.toWorld(global.x, global.y);
+                const xindex = Math.floor(world.x / gridSize);
+                const yindex = Math.floor(world.y / gridSize);
+                paintCellAt(xindex, yindex, getSelectedColor());
+            })
             stage = new Viewport({
                 screenWidth: app.renderer.width,
                 screenHeight: app.renderer.height,
@@ -189,4 +198,21 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
         socket.emit("cellClick", { x: x, y: y, color: newcolor });
     });
     return cell;
+}
+
+function paintCellAt(xindex: number, yindex: number, color: string){
+    if(xindex < 0 || yindex < 0 || !cellMap[yindex] || !cellMap[yindex][xindex]) return;
+    // avoid repeat same cell
+    if(xindex === lastPaintX && yindex === lastPaintY) return;
+    lastPaintX = xindex;
+    lastPaintY = yindex;
+
+    const cell = cellMap[yindex][xindex];
+    updateCellColor(cell, xindex, yindex, color);
+
+    const now = Date.now();
+    if(now - lastEmitTime >= min_emit_interval_ms){
+        lastEmitTime = now;
+        socket.emit("cellClick", {x: xindex, y: yindex, color});
+    }
 }
