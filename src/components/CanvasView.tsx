@@ -100,8 +100,8 @@ function registerSocketListeners() {
 }
 
 function RenderDebugGrid() {
-    const gridCols = 20;
-    const gridRows = 20;
+    const gridCols = 500;
+    const gridRows = 500;
     let grid = Array.from({ length: gridRows }, () =>
         Array(gridCols).fill("#4f0707"));
     rendergrid(grid)
@@ -136,21 +136,16 @@ function rendergrid(serverGrid: any[][]) {
     let endrowcord = rows * gridSize;
     let endcolcord = cols * gridSize;
     let grid = new Graphics(); 
+
+    
     for(let i=0 ;i <= rows; i++)
     {
-        grid.moveTo(i * gridSize, 0).lineTo(i * gridSize, endrowcord);
-        
+        for(let j =0; j <= cols; j++)
+        {
+            grid.rect(j * gridSize, i * gridSize, gridSize, gridSize).fill('red');
+            grid.stroke({ color: 'black', pixelLine: true });
+        }
     }
-    for(let i=0 ;i <= cols; i++)
-    {
-        grid.moveTo(0, i * gridSize).lineTo(endcolcord, i * gridSize);
-    }
 
-    
-    
-
-// Stroke all lines in white with pixel-perfect width
-
-grid.stroke({ color: 'black', pixelLine: true });
 stage.addChild(grid);
 }
