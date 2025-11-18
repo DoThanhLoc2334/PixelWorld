@@ -13,8 +13,8 @@ const io = new Server(server, {
 });
 
 const gridSize = 50;
-const gridCols = Math.floor(1920 / gridSize);
-const gridRows = Math.floor(1080 / gridSize);
+const gridCols = 500;
+const gridRows = 500;
 let grid = Array.from({length: gridRows}, () => 
     Array(gridCols).fill("#4f0707")
 );

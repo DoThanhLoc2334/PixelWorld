@@ -1,19 +1,21 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
-import { Application, Color, Container, Graphics } from "pixi.js"
+import { Application, Color, Container, Graphics, Sprite, Assets, loadTextures, Texture } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import { io } from "socket.io-client";
 import axios from 'axios'
+//import { text } from "stream/consumers";
 
 type CanvasViewProps = { selectedColor?: string };
 let stage: Viewport;
 let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
-let cellMap: Graphics[][] = [];
+let cellMap: Sprite[][] = [];
 const socket = io("http://localhost:3000", {
     transports: ["websocket", "polling"], 
     autoConnect: false, 
 });
+let texturelist = await LoadTexture();
 
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,6 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
 
         (async () => {
             app = await createPixiApp(canvasRef.current!);
-
             stage = new Viewport({
                 screenWidth: app.renderer.width,
                 screenHeight: app.renderer.height,
@@ -70,7 +71,6 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             //     }
             // }
             app.stage.addChild(stage);
-
 
         })();
         console.log("Fired");
@@ -106,18 +106,8 @@ function registerSocketListeners() {
 
     socket.on("initGrid", (serverGrid:any[][]) => {
         console.log("Received full grid from server");
-        const rows = serverGrid.length;
-        const cols = serverGrid[0].length;
-
-        cellMap = Array.from({ length: rows }, () => Array(cols));
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const color = serverGrid[y][x] || "#4f0707";
-                const cell = CreateCell(x, y, gridSize, color);
-                cellMap[y][x] = cell;
-                stage.addChild(cell);
-            }
-        }
+        rendergridexperimental(serverGrid);
+        //rendergrid(serverGrid);
     });
 
     // update khi co nguoi doi mau
@@ -133,24 +123,52 @@ function registerSocketListeners() {
     });
 }
 
-function ensure<T>(argument: T | undefined | null, message: string = 'This value was promised to be there.'): T {
-    if (argument === undefined || argument === null) {
-        throw new TypeError(message);
-    }
-    return argument;
-}
 
 
-
-function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
+function updateCellColor(cell: Sprite, x: number, y: number, color: string) {
     if (!cell) return;
-    cell.clear();
-    cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
+    // cell.clear();
+    // cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
 }
 
+function rendergridexperimental(serverGrid: any[][])
+{
+
+        const rows = serverGrid.length;
+        const cols = serverGrid[0].length;
+        cellMap = Array.from({ length: rows }, () => Array(cols));
+        let grid = new Graphics();
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill('red');
+            }
+        }
+        grid.on('pointermove', (event) => {
+        })
+        stage.addChild(grid);   
+}
+
+
+
+
+function rendergrid(serverGrid: any[][])
+{
+const rows = serverGrid.length;
+        const cols = serverGrid[0].length;
+        cellMap = Array.from({ length: rows }, () => Array(cols));
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const color = serverGrid[y][x] || "#4f0707";
+                const cell = CreateCell(x, y, gridSize, color);
+                cellMap[y][x] = cell;
+                stage.addChild(cell);
+            }
+        }
+}
 
 function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new Graphics().rect(xindex * length, yindex * length, length, length).fill(color);
+    let cell = new Sprite(texturelist[0]);
+    cell.position.set(xindex * gridSize, yindex * gridSize);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
     cell.on('pointerdown', () => {
@@ -161,5 +179,17 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
         stage.addChild(cell);
         socket.emit("cellClick", { x: x, y: y, color: newcolor });
     });
+    cell.cullable = true;
     return cell;
+}
+async function LoadTexture()
+{
+    let texturelist = Array();
+    let redcell = await Assets.load("./src/assets/redcell.png");
+    let bluecell = await Assets.load("./src/assets/bluecell.png");
+    let greencell = await Assets.load("./src/assets/greencell.png");
+    texturelist.push(redcell);
+    texturelist.push(bluecell);
+    texturelist.push(greencell);
+    return texturelist;
 }
