@@ -63,6 +63,14 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
 
         (async () => {
             app = await createPixiApp(canvasRef.current!);
+            stage = new Viewport({
+                screenWidth: app.renderer.width,
+                screenHeight: app.renderer.height,
+                worldWidth: 5000,
+                worldHeight: 5000,
+                events: app.renderer.events,
+            });
+
             stage.on('pointermove', (e: any) => {
                 if(!isPaiting)
                     return;
@@ -72,14 +80,7 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
                 const xindex = Math.floor(world.x / gridSize);
                 const yindex = Math.floor(world.y / gridSize);
                 paintCellAt(xindex, yindex, getSelectedColor());
-            })
-            stage = new Viewport({
-                screenWidth: app.renderer.width,
-                screenHeight: app.renderer.height,
-                worldWidth: 5000,
-                worldHeight: 5000,
-                events: app.renderer.events,
-            })
+            });
 
             stage.resize(app.screen.width, app.screen.height);
 
