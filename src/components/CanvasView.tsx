@@ -93,15 +93,9 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             if (!socket.connected) {
                 socket.connect();
             }
-            // await axios.get('http://localhost:8080').then((response) => {
-            //     grid = response.data;
-            // });
-            // for (let i = 0; i < 20; i++) {
-            //     for (let j = 0; j < 20; j++) {
-            //         let cell = CreateCell(j, i, gridSize, grid[i][j]);
-            //         stage.addChild(cell);
-            //     }
-            // }
+           
+            
+            
             app.stage.addChild(stage);
 
 
@@ -109,8 +103,8 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
         console.log("Fired");
 
         return () => {
-            window.addEventListener("keydown", onKeyDown);
-            window.addEventListener("keyup", onKeyUp);
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
 
             socket.off("connect");
             socket.off("disconnect");
