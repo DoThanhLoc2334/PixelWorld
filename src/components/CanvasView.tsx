@@ -15,7 +15,11 @@ const socket = io("http://localhost:3000", {
     transports: ["websocket", "polling"], 
     autoConnect: false, 
 });
-let texturelist = await LoadTexture();
+let pointergraphic = new Graphics();
+pointergraphic.eventMode = 'none';
+pointergraphic.alpha = 0.5;
+let pointercellx: number;
+let pointercelly: number;
 
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -48,9 +52,8 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
                 worldHeight: 5000,
                 events: app.renderer.events,
             })
-
             stage.resize(app.screen.width, app.screen.height);
-
+           
             app.stage.addChild(stage);
 
             stage.drag()
@@ -61,15 +64,6 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             if (!socket.connected) {
                 socket.connect();
             }
-            // await axios.get('http://localhost:8080').then((response) => {
-            //     grid = response.data;
-            // });
-            // for (let i = 0; i < 20; i++) {
-            //     for (let j = 0; j < 20; j++) {
-            //         let cell = CreateCell(j, i, gridSize, grid[i][j]);
-            //         stage.addChild(cell);
-            //     }
-            // }
             app.stage.addChild(stage);
 
         })();
@@ -143,9 +137,25 @@ function rendergridexperimental(serverGrid: any[][])
                 grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill('red');
             }
         }
+        grid.eventMode = 'static';
+        grid.cursor = 'pointer';
         grid.on('pointermove', (event) => {
-        })
+            let mouseposition = stage.toWorld(event.global);
+            let x = mouseposition.x;
+            let y = mouseposition.y;
+            pointergraphic.clear();
+            let normalizedx = Math.floor(x / gridSize) * gridSize;
+            let normalizedy = Math.floor(y / gridSize) * gridSize;
+            pointercellx = normalizedx;
+            pointercelly = normalizedy;
+            pointergraphic.rect(normalizedx, normalizedy,gridSize, gridSize).fill('blue');
+        });
+        grid.on('pointerdown', () => {
+            console.log('pressed');
+            grid.rect(pointercellx, pointercelly, gridSize, gridSize).fill(getSelectedColor());
+        });
         stage.addChild(grid);   
+        stage.addChild(pointergraphic);
 }
 
 
@@ -167,7 +177,7 @@ const rows = serverGrid.length;
 }
 
 function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new Sprite(texturelist[0]);
+    let cell = new Sprite();
     cell.position.set(xindex * gridSize, yindex * gridSize);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
@@ -181,15 +191,4 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
     });
     cell.cullable = true;
     return cell;
-}
-async function LoadTexture()
-{
-    let texturelist = Array();
-    let redcell = await Assets.load("./src/assets/redcell.png");
-    let bluecell = await Assets.load("./src/assets/bluecell.png");
-    let greencell = await Assets.load("./src/assets/greencell.png");
-    texturelist.push(redcell);
-    texturelist.push(bluecell);
-    texturelist.push(greencell);
-    return texturelist;
 }
