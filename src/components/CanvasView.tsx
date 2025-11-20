@@ -25,7 +25,12 @@ pointergraphic.alpha = 0.5;
 let pointercellx: number;
 let pointercelly: number;
 
-export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
+type CanvasProps = {
+    selectedColor: string,
+    isDrawingEnabled: boolean
+}
+
+export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
     useEffect(() => {
