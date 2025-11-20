@@ -8,7 +8,7 @@ type CanvasViewProps = { selectedColor?: string };
 let stage: Viewport;
 let getSelectedColor = () => "#1e90ff";
 const gridSize = 50;
-let cellMap: Graphics[][] = [];
+let cellMap: string[][] = [];
 let isPaiting = false;
 let lastPaintX = -1;
 let lastPaintY = -1;
@@ -22,8 +22,8 @@ const socket = io("http://localhost:3000", {
 let pointergraphic = new Graphics();
 pointergraphic.eventMode = 'none';
 pointergraphic.alpha = 0.5;
-let pointercellx: number;
-let pointercelly: number;
+let pointercellx: 0;
+let pointercelly: 0;
 
 type CanvasProps = {
     selectedColor: string,
@@ -58,7 +58,6 @@ export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasPro
 
         if (!canvasRef.current) return;
         let app: Application;
-        let grid = Array(20);
 
         (async () => {
             app = await createPixiApp(canvasRef.current!);
@@ -83,8 +82,6 @@ export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasPro
 
             stage.resize(app.screen.width, app.screen.height);
            
-            app.stage.addChild(stage);
-
             stage.drag()
             stage.pinch()
             stage.wheel()
@@ -139,9 +136,7 @@ function registerSocketListeners() {
     // update khi co nguoi doi mau
     socket.on("updateCell", ({ x, y, color }) => {
         // update cell khi nhan duoc update tu server(co the tu client khac hoac chinh ban than)
-        let xPos = x * gridSize;
-        let yPos = y * gridSize;
-        updateCellColor(xPos, yPos, color);
+        updateCellColor(x, y, color);
     })
 
     socket.on("serverMessage", (data: { message: string }) => {
@@ -151,12 +146,12 @@ function registerSocketListeners() {
 
 
 
-function updateCellColor(x: number, y: number, color: string) {
-    if(x % gridSize != 0 || y % gridSize)
-    {
-        alert('updateCellColor, wrong parameter');
-        return;
-    }
+function updateCellColor(xIndex: number, yIndex: number, color: string) {
+    if (!cellMap[yIndex] || cellMap[yIndex][xIndex] === undefined) 
+        return; 
+    cellMap[yIndex][xIndex] = color; 
+    const x = xIndex * gridSize; 
+    const y = yIndex * gridSize;
     grid.rect(x, y, gridSize, gridSize).fill(color);
     
 }
