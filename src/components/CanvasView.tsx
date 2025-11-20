@@ -156,10 +156,10 @@ function registerSocketListeners() {
 
 
 
-function updateCellColor(cell: Sprite, x: number, y: number, color: string) {
+function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
     if (!cell) return;
-    // cell.clear();
-    // cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
+    cell.clear();
+    cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
 }
 
 function rendergridexperimental(serverGrid: any[][])
@@ -214,7 +214,7 @@ const rows = serverGrid.length;
 }
 
 function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new Sprite();
+    let cell = new Graphics();
     cell.position.set(xindex * gridSize, yindex * gridSize);
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
