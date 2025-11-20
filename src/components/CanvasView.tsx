@@ -3,7 +3,6 @@ import { createPixiApp } from "../pixi";
 import { Application, Color, Container, Graphics } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import { io } from "socket.io-client";
-import axios from 'axios'
 
 type CanvasViewProps = { selectedColor?: string };
 let stage: Viewport;
@@ -17,8 +16,8 @@ let lastEmitTime = 0;
 const min_emit_interval_ms = 30;
 
 const socket = io("http://localhost:3000", {
-    transports: ["websocket", "polling"], 
-    autoConnect: false, 
+    transports: ["websocket", "polling"],
+    autoConnect: false,
 });
 
 export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewProps) {
@@ -26,14 +25,14 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
     getSelectedColor = () => selectedColor;
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if(e.code === "Space"){
+            if (e.code === "Space") {
                 e.preventDefault();
                 isPaiting = true;
             }
         };
 
         const onKeyUp = (e: KeyboardEvent) => {
-            if(e.code === "Space") {
+            if (e.code === "Space") {
                 e.preventDefault();
                 isPaiting = false;
                 lastPaintX = -1;
@@ -72,7 +71,7 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             });
 
             stage.on('pointermove', (e: any) => {
-                if(!isPaiting)
+                if (!isPaiting)
                     return;
                 const global = e.data.global;
 
@@ -94,9 +93,9 @@ export default function CanvasView({ selectedColor = "#1effa5ff" }: CanvasViewPr
             if (!socket.connected) {
                 socket.connect();
             }
-           
-            
-            
+
+
+
             app.stage.addChild(stage);
 
 
@@ -135,7 +134,7 @@ function registerSocketListeners() {
         console.log("Server disconnected");
     });
 
-    socket.on("initGrid", (serverGrid:any[][]) => {
+    socket.on("initGrid", (serverGrid: any[][]) => {
         console.log("Received full grid from server");
         const rows = serverGrid.length;
         const cols = serverGrid[0].length;
@@ -159,7 +158,7 @@ function registerSocketListeners() {
         updateCellColor(cell, x, y, color);
     })
 
-    socket.on("serverMessage", (data: {message: string}) => {
+    socket.on("serverMessage", (data: { message: string }) => {
         console.log("Message from Server:", data.message);
     });
 }
@@ -195,19 +194,23 @@ function CreateCell(xindex: number, yindex: number, length: number, color: strin
     return cell;
 }
 
-function paintCellAt(xindex: number, yindex: number, color: string){
-    if(xindex < 0 || yindex < 0 || !cellMap[yindex] || !cellMap[yindex][xindex]) return;
+function paintCellAt(xindex: number, yindex: number, color: string) {
+    if (xindex < 0 || yindex < 0 || !cellMap[yindex] || !cellMap[yindex][xindex]) return;
     // avoid repeat same cell
-    if(xindex === lastPaintX && yindex === lastPaintY) return;
+    if (xindex === lastPaintX && yindex === lastPaintY) return;
     lastPaintX = xindex;
     lastPaintY = yindex;
 
     const cell = cellMap[yindex][xindex];
+    const targetHex = parseInt(color.replace("#", ""), 16);
+    const currentHex = cell.fillStyle?.color;
+    if (currentHex === targetHex) return;
+
     updateCellColor(cell, xindex, yindex, color);
 
     const now = Date.now();
-    if(now - lastEmitTime >= min_emit_interval_ms){
+    if (now - lastEmitTime >= min_emit_interval_ms) {
         lastEmitTime = now;
-        socket.emit("cellClick", {x: xindex, y: yindex, color});
+        socket.emit("cellClick", { x: xindex, y: yindex, color });
     }
 }
