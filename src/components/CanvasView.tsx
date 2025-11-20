@@ -187,7 +187,9 @@ function rendergrid(serverGrid: any[][])
                 return;
             }
             console.log('pressed');
-            grid.rect(pointercellx, pointercelly, gridSize, gridSize).fill(getSelectedColor());
+            let newcolor = getSelectedColor();
+            grid.rect(pointercellx, pointercelly, gridSize, gridSize).fill(newcolor);
+            socket.emit("cellClick", { x: pointercellx, y: pointercelly, color: newcolor });
         });
         stage.addChild(grid);   
         stage.addChild(pointergraphic);
