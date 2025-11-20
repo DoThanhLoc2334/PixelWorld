@@ -138,10 +138,10 @@ function registerSocketListeners() {
 
     // update khi co nguoi doi mau
     socket.on("updateCell", ({ x, y, color }) => {
-        const cell = cellMap[y][x];
-        if (!cell) return;
         // update cell khi nhan duoc update tu server(co the tu client khac hoac chinh ban than)
-        updateCellColor(cell, x, y, color);
+        let xPos = x * gridSize;
+        let yPos = y * gridSize;
+        updateCellColor(xPos, yPos, color);
     })
 
     socket.on("serverMessage", (data: { message: string }) => {
@@ -151,21 +151,19 @@ function registerSocketListeners() {
 
 
 
-function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
-    if (!cell) return;
-    cell.clear();
-    cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
+function updateCellColor(x: number, y: number, color: string) {
+    grid.rect(x, y, gridSize, gridSize).fill(color);
+    
 }
 
 function rendergrid(serverGrid: any[][])
 {
-
         const rows = serverGrid.length;
         const cols = serverGrid[0].length;
         cellMap = Array.from({ length: rows }, () => Array(cols));
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
-                grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill('red');
+                grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
             }
         }
         grid.eventMode = 'static';
@@ -188,8 +186,11 @@ function rendergrid(serverGrid: any[][])
             }
             console.log('pressed');
             let newcolor = getSelectedColor();
-            grid.rect(pointercellx, pointercelly, gridSize, gridSize).fill(newcolor);
-            socket.emit("cellClick", { x: pointercellx, y: pointercelly, color: newcolor });
+            console.log(pointercellx);
+            updateCellColor(pointercellx, pointercelly, newcolor);
+            let indexX = Math.floor(pointercellx / gridSize);
+            let indexY = Math.floor(pointercelly / gridSize);
+            socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
         });
         stage.addChild(grid);   
         stage.addChild(pointergraphic);
@@ -242,7 +243,7 @@ function paintCellAt(xindex: number, yindex: number, color: string) {
     const currentHex = cell.fillStyle?.color;
     if (currentHex === targetHex) return;
 
-    updateCellColor(cell, xindex, yindex, color);
+    updateCellColor(xindex, yindex, color);
 
     const now = Date.now();
     if (now - lastEmitTime >= min_emit_interval_ms) {
