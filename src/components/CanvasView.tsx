@@ -239,16 +239,17 @@ function rendergrid(serverGrid: any[][]) {
 // }
 
 function paintCellAt(xindex: number, yindex: number, color: string) {
-    if (xindex < 0 || yindex < 0 || !cellMap[yindex] || !cellMap[yindex][xindex]) return;
+    if (xindex < 0 || yindex < 0 || !cellMap[yindex][xindex] === undefined) return;
     // avoid repeat same cell
-    if (xindex === lastPaintX && yindex === lastPaintY) return;
+    if (xindex === lastPaintX && yindex === lastPaintY) 
+        return;
+    const currentColor = cellMap[yindex][xindex];
+    if(currentColor === color) 
+        return;
     lastPaintX = xindex;
     lastPaintY = yindex;
 
-    const cell = cellMap[yindex][xindex];
-    const targetHex = parseInt(color.replace("#", ""), 16);
-    const currentHex = cell.fillStyle?.color;
-    if (currentHex === targetHex) return;
+   
 
     updateCellColor(xindex, yindex, color);
 
