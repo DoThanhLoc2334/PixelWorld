@@ -52,19 +52,6 @@ export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasPro
 
         window.addEventListener("keydown", onKeyDown);
         window.addEventListener("keyup", onKeyUp)
-        // Socket event listeners
-        // socket.on("connect", () => {
-        //     console.log("Connected to PixelWord!");
-        // });
-
-        // socket.on("disconnect", () => {
-        //     console.log("Server disconnected");
-        // });
-
-        // // Connect to server if not already connected
-        // if (!socket.connected) {
-        //     socket.connect();
-        // }
 
         if (!canvasRef.current) return;
         let app: Application;
@@ -142,7 +129,7 @@ function registerSocketListeners() {
 
     socket.on("initGrid", (serverGrid: any[][]) => {
         console.log("Received full grid from server");
-        rendergridexperimental(serverGrid);
+        rendergrid(serverGrid);
         //rendergrid(serverGrid);
     });
 
@@ -167,7 +154,7 @@ function updateCellColor(cell: Graphics, x: number, y: number, color: string) {
     cell.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
 }
 
-function rendergridexperimental(serverGrid: any[][])
+function rendergrid(serverGrid: any[][])
 {
 
         const rows = serverGrid.length;
@@ -203,37 +190,37 @@ function rendergridexperimental(serverGrid: any[][])
 
 
 
-function rendergrid(serverGrid: any[][])
-{
-const rows = serverGrid.length;
-        const cols = serverGrid[0].length;
-        cellMap = Array.from({ length: rows }, () => Array(cols));
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const color = serverGrid[y][x] || "#4f0707";
-                const cell = CreateCell(x, y, gridSize, color);
-                cellMap[y][x] = cell;
-                stage.addChild(cell);
-            }
-        }
-}
+// function rendergrid(serverGrid: any[][])
+// {
+// const rows = serverGrid.length;
+//         const cols = serverGrid[0].length;
+//         cellMap = Array.from({ length: rows }, () => Array(cols));
+//         for (let y = 0; y < rows; y++) {
+//             for (let x = 0; x < cols; x++) {
+//                 const color = serverGrid[y][x] || "#4f0707";
+//                 const cell = CreateCell(x, y, gridSize, color);
+//                 cellMap[y][x] = cell;
+//                 stage.addChild(cell);
+//             }
+//         }
+// }
 
-function CreateCell(xindex: number, yindex: number, length: number, color: string) {
-    let cell = new Graphics();
-    cell.position.set(xindex * gridSize, yindex * gridSize);
-    cell.eventMode = 'static';
-    cell.cursor = 'pointer';
-    cell.on('pointerdown', () => {
-        let x = xindex;
-        let y = yindex;
-        let newcolor = getSelectedColor();
-        updateCellColor(cell, x, y, newcolor)
-        stage.addChild(cell);
-        socket.emit("cellClick", { x: x, y: y, color: newcolor });
-    });
-    cell.cullable = true;
-    return cell;
-}
+// function CreateCell(xindex: number, yindex: number, length: number, color: string) {
+//     let cell = new Graphics();
+//     cell.position.set(xindex * gridSize, yindex * gridSize);
+//     cell.eventMode = 'static';
+//     cell.cursor = 'pointer';
+//     cell.on('pointerdown', () => {
+//         let x = xindex;
+//         let y = yindex;
+//         let newcolor = getSelectedColor();
+//         updateCellColor(cell, x, y, newcolor)
+//         stage.addChild(cell);
+//         socket.emit("cellClick", { x: x, y: y, color: newcolor });
+//     });
+//     cell.cullable = true;
+//     return cell;
+// }
 
 function paintCellAt(xindex: number, yindex: number, color: string) {
     if (xindex < 0 || yindex < 0 || !cellMap[yindex] || !cellMap[yindex][xindex]) return;
