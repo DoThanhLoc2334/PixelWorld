@@ -22,8 +22,8 @@ const socket = io("http://localhost:3000", {
 let pointergraphic = new Graphics();
 pointergraphic.eventMode = 'none';
 pointergraphic.alpha = 0.5;
-let pointercellx: 0;
-let pointercelly: 0;
+let pointercellx: number;
+let pointercelly: number;
 
 type CanvasProps = {
     selectedColor: string,
@@ -32,7 +32,7 @@ type CanvasProps = {
 let isDrawable: boolean
 let grid = new Graphics();
 
-export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasProps) {
+export default function CanvasView({ selectedColor, isDrawingEnabled }: CanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
     isDrawable = isDrawingEnabled;
@@ -81,7 +81,7 @@ export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasPro
             });
 
             stage.resize(app.screen.width, app.screen.height);
-           
+
             stage.drag()
             stage.pinch()
             stage.wheel()
@@ -147,53 +147,60 @@ function registerSocketListeners() {
 
 
 function updateCellColor(xIndex: number, yIndex: number, color: string) {
-    if (!cellMap[yIndex] || cellMap[yIndex][xIndex] === undefined) 
-        return; 
-    cellMap[yIndex][xIndex] = color; 
-    const x = xIndex * gridSize; 
+    if (!cellMap[yIndex] || cellMap[yIndex][xIndex] === undefined)
+        return;
+    cellMap[yIndex][xIndex] = color;
+    const x = xIndex * gridSize;
     const y = yIndex * gridSize;
     grid.rect(x, y, gridSize, gridSize).fill(color);
-    
+
 }
 
-function rendergrid(serverGrid: any[][])
-{
-        const rows = serverGrid.length;
-        const cols = serverGrid[0].length;
-        cellMap = Array.from({ length: rows }, () => Array(cols));
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
-            }
+function rendergrid(serverGrid: any[][]) {
+    const rows = serverGrid.length;
+    const cols = serverGrid[0]?.length ?? 0;
+    if (!rows || !cols)
+        return;
+
+    cellMap = Array.from({ length: rows }, (_, rowIndex) =>
+        Array.from({ length: cols }, (_, colIndex) => serverGrid[rowIndex][colIndex] || "#4f0707"),
+    );
+    grid.clear(); 
+    grid.removeAllListeners();
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
         }
-        grid.eventMode = 'static';
-        grid.cursor = 'pointer';
-        grid.on('pointermove', (event) => {
-            let mouseposition = stage.toWorld(event.global);
-            let x = mouseposition.x;
-            let y = mouseposition.y;
-            pointergraphic.clear();
-            let normalizedx = Math.floor(x / gridSize) * gridSize;
-            let normalizedy = Math.floor(y / gridSize) * gridSize;
-            pointercellx = normalizedx;
-            pointercelly = normalizedy;
-            pointergraphic.rect(normalizedx, normalizedy,gridSize, gridSize).fill('blue');
-        });
-        grid.on('pointerdown', () => {
-            if(!isDrawable)
-            {
-                return;
-            }
-            console.log('pressed');
-            let newcolor = getSelectedColor();
-            console.log(pointercellx);
-            updateCellColor(pointercellx, pointercelly, newcolor);
-            let indexX = Math.floor(pointercellx / gridSize);
-            let indexY = Math.floor(pointercelly / gridSize);
-            socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
-        });
-        stage.addChild(grid);   
-        stage.addChild(pointergraphic);
+    }
+    grid.eventMode = 'static';
+    grid.cursor = 'pointer';
+    grid.on('pointermove', (event) => {
+        let mouseposition = stage.toWorld(event.global);
+        let x = mouseposition.x;
+        let y = mouseposition.y;
+        let normalizedx = Math.floor(x / gridSize) * gridSize;
+        let normalizedy = Math.floor(y / gridSize) * gridSize;        
+        pointercellx = normalizedx;
+        pointercelly = normalizedy;
+        pointergraphic.clear();
+
+        pointergraphic.rect(normalizedx, normalizedy, gridSize, gridSize).fill('blue');
+    });
+    grid.on('pointerdown', () => {
+        if (!isDrawable) {
+            return;
+        }
+        console.log(pointercellx);
+        let indexX = Math.floor(pointercellx / gridSize);
+        let indexY = Math.floor(pointercelly / gridSize);
+        if(indexX < 0 || indexY < 0) 
+            return;
+        let newcolor = getSelectedColor();
+        updateCellColor(indexX, indexY, newcolor);
+        socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
+    });
+    stage.addChild(grid);
+    stage.addChild(pointergraphic);
 }
 
 
