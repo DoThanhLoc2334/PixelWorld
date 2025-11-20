@@ -29,12 +29,13 @@ type CanvasProps = {
     selectedColor: string,
     isDrawingEnabled: boolean
 }
-
+let isDrawable: boolean
 let grid = new Graphics();
 
 export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
+    isDrawable = isDrawingEnabled;
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.code === "Space") {
@@ -181,6 +182,10 @@ function rendergrid(serverGrid: any[][])
             pointergraphic.rect(normalizedx, normalizedy,gridSize, gridSize).fill('blue');
         });
         grid.on('pointerdown', () => {
+            if(!isDrawable)
+            {
+                return;
+            }
             console.log('pressed');
             grid.rect(pointercellx, pointercelly, gridSize, gridSize).fill(getSelectedColor());
         });
