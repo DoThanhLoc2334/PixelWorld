@@ -30,6 +30,8 @@ type CanvasProps = {
     isDrawingEnabled: boolean
 }
 
+let grid = new Graphics();
+
 export default function CanvasView({selectedColor, isDrawingEnabled} : CanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     getSelectedColor = () => selectedColor;
@@ -160,7 +162,6 @@ function rendergrid(serverGrid: any[][])
         const rows = serverGrid.length;
         const cols = serverGrid[0].length;
         cellMap = Array.from({ length: rows }, () => Array(cols));
-        let grid = new Graphics();
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
                 grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill('red');
