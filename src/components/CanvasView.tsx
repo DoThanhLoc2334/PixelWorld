@@ -152,6 +152,11 @@ function registerSocketListeners() {
 
 
 function updateCellColor(x: number, y: number, color: string) {
+    if(x % gridSize != 0 || y % gridSize)
+    {
+        alert('updateCellColor, wrong parameter');
+        return;
+    }
     grid.rect(x, y, gridSize, gridSize).fill(color);
     
 }
