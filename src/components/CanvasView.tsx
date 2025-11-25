@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
-import { Application, Color, Container, Graphics, Sprite, Assets, loadTextures, Texture } from "pixi.js"
+import { Application, Color, Container, Graphics, Sprite, Assets, loadTextures, Texture, Rectangle } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import { io } from "socket.io-client";
 
@@ -159,6 +159,8 @@ function updateCellColor(xIndex: number, yIndex: number, color: string) {
 function rendergrid(serverGrid: any[][]) {
     const rows = serverGrid.length;
     const cols = serverGrid[0]?.length ?? 0;
+    const chunksize = 25;
+    const chunkcount = rows / chunksize;
     if (!rows || !cols)
         return;
 
@@ -167,11 +169,35 @@ function rendergrid(serverGrid: any[][]) {
     );
     grid.clear(); 
     grid.removeAllListeners();
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
+    let num = 1;
+    let color = 'red';
+    for(let ychunk = 0; ychunk < chunkcount; ychunk++)
+    {
+        for(let xchunk = 0; xchunk < chunkcount; xchunk++)
+        {
+            for(let y = ychunk * chunksize; y < (ychunk + 1) * chunksize; y++)
+            {
+                if(num == 1)
+                {
+                    color = 'red';
+                }else
+                    color = 'blue';
+                for(let x = xchunk * chunksize; x < (xchunk + 1) * chunksize; x++)
+                {
+                    let graphic = new Graphics();
+                    graphic.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
+                    graphic.cullable = true;
+                    stage.addChild(graphic);
+                    num = 1 - num;
+                }
+            }
         }
     }
+    // for (let y = 0; y < rows; y++) {
+    //     for (let x = 0; x < cols; x++) {
+    //         grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
+    //     }
+    // }
     grid.eventMode = 'static';
     grid.cursor = 'pointer';
     grid.on('pointermove', (event) => {
@@ -197,9 +223,9 @@ function rendergrid(serverGrid: any[][]) {
             return;
         let newcolor = getSelectedColor();
         updateCellColor(indexX, indexY, newcolor);
-        socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
+        //socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
     });
-    stage.addChild(grid);
+    //stage.addChild(grid);
     stage.addChild(pointergraphic);
 }
 
