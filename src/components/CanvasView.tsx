@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPixiApp } from "../pixi";
-import { Application, Color, Container, Graphics, Sprite, Assets, loadTextures, Texture, Rectangle } from "pixi.js"
+import { Application, Color, Container, Graphics, Sprite, Assets, loadTextures, Texture, Rectangle, type Renderer } from "pixi.js"
 import { Viewport } from "pixi-viewport";
 import { io } from "socket.io-client";
 
@@ -30,7 +30,8 @@ type CanvasProps = {
     isDrawingEnabled: boolean
 }
 let isDrawable: boolean
-let grid = new Graphics();
+let renderer: Renderer
+//let grid = new Graphics();
 
 export default function CanvasView({ selectedColor, isDrawingEnabled }: CanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,7 @@ export default function CanvasView({ selectedColor, isDrawingEnabled }: CanvasPr
                 worldHeight: 5000,
                 events: app.renderer.events,
             });
-
+            renderer = app.renderer;
             stage.on('pointermove', (e: any) => {
                 if (!isPaiting)
                     return;
@@ -86,6 +87,8 @@ export default function CanvasView({ selectedColor, isDrawingEnabled }: CanvasPr
             stage.pinch()
             stage.wheel()
             stage.decelerate();
+            stage.cullable = true;
+            stage.cullableChildren = true;
             registerSocketListeners();
             if (!socket.connected) {
                 socket.connect();
@@ -152,7 +155,7 @@ function updateCellColor(xIndex: number, yIndex: number, color: string) {
     cellMap[yIndex][xIndex] = color;
     const x = xIndex * gridSize;
     const y = yIndex * gridSize;
-    grid.rect(x, y, gridSize, gridSize).fill(color);
+    //grid.rect(x, y, gridSize, gridSize).fill(color);
 
 }
 
@@ -167,29 +170,46 @@ function rendergrid(serverGrid: any[][]) {
     cellMap = Array.from({ length: rows }, (_, rowIndex) =>
         Array.from({ length: cols }, (_, colIndex) => serverGrid[rowIndex][colIndex] || "#4f0707"),
     );
-    grid.clear(); 
-    grid.removeAllListeners();
-    let num = 1;
-    let color = 'red';
-    for(let ychunk = 0; ychunk < chunkcount; ychunk++)
-    {
-        for(let xchunk = 0; xchunk < chunkcount; xchunk++)
-        {
-            for(let y = ychunk * chunksize; y < (ychunk + 1) * chunksize; y++)
-            {
-                if(num == 1)
-                {
-                    color = 'red';
-                }else
-                    color = 'blue';
-                for(let x = xchunk * chunksize; x < (xchunk + 1) * chunksize; x++)
-                {
-                    let graphic = new Graphics();
-                    graphic.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(color);
-                    graphic.cullable = true;
-                    stage.addChild(graphic);
-                    num = 1 - num;
+    let num = 50;
+    for (let ychunk = 0; ychunk < chunkcount; ychunk++) {
+        for (let xchunk = 0; xchunk < chunkcount; xchunk++) {
+            for (let y = ychunk * chunksize; y < (ychunk + 1) * chunksize; y++) {
+                let grid = new Graphics();
+                for (let x = xchunk * chunksize; x < (xchunk + 1) * chunksize; x++) {
+                    grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
+                    grid.cullable = true;
+
                 }
+                grid.eventMode = 'static';
+                grid.cursor = 'pointer';
+                grid.on('pointermove', (event) => {
+                    let mouseposition = stage.toWorld(event.global);
+                    let x = mouseposition.x;
+                    let y = mouseposition.y;
+                    let normalizedx = Math.floor(x / gridSize) * gridSize;
+                    let normalizedy = Math.floor(y / gridSize) * gridSize;
+                    pointercellx = normalizedx;
+                    pointercelly = normalizedy;
+                    pointergraphic.clear();
+
+                    pointergraphic.rect(normalizedx, normalizedy, gridSize, gridSize).fill('blue');
+                });
+                grid.on('pointerdown', () => {
+                    if (!isDrawable) {
+                        return;
+                    }
+                    console.log(pointercellx);
+                    let indexX = Math.floor(pointercellx / gridSize);
+                    let indexY = Math.floor(pointercelly / gridSize);
+                    if (indexX < 0 || indexY < 0)
+                        return;
+                    let newcolor = getSelectedColor();
+                    updateCellColor(indexX, indexY, newcolor);
+                    //socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
+                });
+                    stage.addChild(grid);
+                
+
             }
         }
     }
@@ -198,33 +218,7 @@ function rendergrid(serverGrid: any[][]) {
     //         grid.rect(x * gridSize, y * gridSize, gridSize, gridSize).fill(serverGrid[y][x]);
     //     }
     // }
-    grid.eventMode = 'static';
-    grid.cursor = 'pointer';
-    grid.on('pointermove', (event) => {
-        let mouseposition = stage.toWorld(event.global);
-        let x = mouseposition.x;
-        let y = mouseposition.y;
-        let normalizedx = Math.floor(x / gridSize) * gridSize;
-        let normalizedy = Math.floor(y / gridSize) * gridSize;        
-        pointercellx = normalizedx;
-        pointercelly = normalizedy;
-        pointergraphic.clear();
 
-        pointergraphic.rect(normalizedx, normalizedy, gridSize, gridSize).fill('blue');
-    });
-    grid.on('pointerdown', () => {
-        if (!isDrawable) {
-            return;
-        }
-        console.log(pointercellx);
-        let indexX = Math.floor(pointercellx / gridSize);
-        let indexY = Math.floor(pointercelly / gridSize);
-        if(indexX < 0 || indexY < 0) 
-            return;
-        let newcolor = getSelectedColor();
-        updateCellColor(indexX, indexY, newcolor);
-        //socket.emit("cellClick", { x: indexX, y: indexY, color: newcolor });
-    });
     //stage.addChild(grid);
     stage.addChild(pointergraphic);
 }
@@ -267,15 +261,15 @@ function rendergrid(serverGrid: any[][]) {
 function paintCellAt(xindex: number, yindex: number, color: string) {
     if (xindex < 0 || yindex < 0 || !cellMap[yindex][xindex] === undefined) return;
     // avoid repeat same cell
-    if (xindex === lastPaintX && yindex === lastPaintY) 
+    if (xindex === lastPaintX && yindex === lastPaintY)
         return;
     const currentColor = cellMap[yindex][xindex];
-    if(currentColor === color) 
+    if (currentColor === color)
         return;
     lastPaintX = xindex;
     lastPaintY = yindex;
 
-   
+
 
     updateCellColor(xindex, yindex, color);
 
