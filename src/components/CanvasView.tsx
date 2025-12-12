@@ -163,7 +163,7 @@ function rendergrid(serverGrid: any[][]) {
         return;
 
     cellMap = Array.from({ length: rows }, (_, rowIndex) =>
-        Array.from({ length: cols }, (_, colIndex) => serverGrid[rowIndex][colIndex] || "#4f0707"),
+        Array.from({ length: cols }, (_, colIndex) => serverGrid[rowIndex][colIndex] || "#26bfe6ff"),
     );
     grid.clear(); 
     grid.removeAllListeners();
