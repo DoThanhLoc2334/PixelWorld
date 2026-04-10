@@ -1,92 +1,92 @@
 # PixelWorld
 
-PixelWorld la mot ung dung canvas pixel thoi gian thuc, noi nhieu nguoi dung co the to mau len cung mot luoi va thay doi duoc dong bo ngay qua Socket.IO.
+PixelWorld là một ứng dụng canvas pixel thời gian thực, nơi nhiều người dùng có thể tô màu lên cùng một lưới và thấy thay đổi được đồng bộ ngay qua Socket.IO.
 
-## Tinh nang chinh
+## Tính năng chính
 
-- Hien thi world dang luoi pixel kich thuoc lon bang `PixiJS`.
-- Di chuyen va zoom canvas voi `pixi-viewport`.
-- Chon mau tu bang 10 mau co dinh.
-- Bat/tat che do ve truc tiep tren giao dien.
-- Dong bo thay doi giua nhieu client theo thoi gian thuc bang `Socket.IO`.
+- Hiển thị world dạng lưới pixel kích thước lớn bằng `PixiJS`.
+- Di chuyển và zoom canvas với `pixi-viewport`.
+- Chọn màu từ bảng 10 màu cố định.
+- Bật/tắt chế độ vẽ trực tiếp trên giao diện.
+- Đồng bộ thay đổi giữa nhiều client theo thời gian thực bằng `Socket.IO`.
 
-## Cong nghe su dung
+## Công nghệ sử dụng
 
 - Frontend: `React 19`, `TypeScript`, `Vite`
 - Rendering: `PixiJS`, `@pixi/react`, `pixi-viewport`
 - Realtime: `socket.io-client`
 - Backend: `Node.js`, `Express`, `Socket.IO`
 
-## Cau truc project
+## Cấu trúc project
 
 ```text
 PixelWorld/
 |-- src/
-|   |-- components/CanvasView.tsx   # Canvas chinh, xu ly ve va socket
-|   |-- App.tsx                     # UI chon mau, bat/tat che do ve
+|   |-- components/CanvasView.tsx   # Canvas chính, xử lý vẽ và socket
+|   |-- App.tsx                     # UI chọn màu, bật/tắt chế độ vẽ
 |   |-- main.tsx                    # Entry frontend
 |-- public/
 |-- Server/
-|   |-- server.js                   # Realtime server voi Express + Socket.IO
+|   |-- server.js                   # Realtime server với Express + Socket.IO
 |   |-- package.json
-|-- package.json                    # Cau hinh frontend
+|-- package.json                    # Cấu hình frontend
 ```
 
-## Yeu cau moi truong
+## Yêu cầu môi trường
 
-- `Node.js` 18 tro len
-- `npm` 9 tro len
+- `Node.js` 18 trở lên
+- `npm` 9 trở lên
 
-## Cai dat
+## Cài đặt
 
-Cai dependencies cho frontend:
+Cài dependencies cho frontend:
 
 ```bash
 npm install
 ```
 
-Cai dependencies cho backend:
+Cài dependencies cho backend:
 
 ```bash
 cd Server
 npm install
 ```
 
-## Chay project o moi truong local
+## Chạy project ở môi trường local
 
-Mo 2 terminal rieng.
+Mở 2 terminal riêng.
 
-Terminal 1, chay backend:
+Terminal 1, chạy backend:
 
 ```bash
 cd Server
 npm start
 ```
 
-Backend se chay tai `http://localhost:3000`.
+Backend sẽ chạy tại `http://localhost:3000`.
 
-Terminal 2, chay frontend:
+Terminal 2, chạy frontend:
 
 ```bash
 npm run dev
 ```
 
-Frontend mac dinh se chay qua Vite, thuong tai `http://localhost:5173`.
+Frontend mặc định sẽ chạy qua Vite, thường tại `http://localhost:5173`.
 
-## Cach su dung
+## Cách sử dụng
 
-- Mo ung dung tren trinh duyet.
-- Nhan nut cay but o goc phai tren de bat che do ve.
-- Chon mau o thanh cong cu goc trai tren.
-- Click vao o de to mau.
-- Co the giu `Space` va re chuot de to lien tuc tren nhieu o.
-- Cac client khac dang ket noi se nhan duoc cap nhat gan nhu ngay lap tuc.
+- Mở ứng dụng trên trình duyệt.
+- Nhấn nút cây bút ở góc phải trên để bật chế độ vẽ.
+- Chọn màu ở thanh công cụ góc trái trên.
+- Click vào ô để tô màu.
+- Có thể giữ `Space` và rê chuột để tô liên tục trên nhiều ô.
+- Các client khác đang kết nối sẽ nhận được cập nhật gần như ngay lập tức.
 
-## Cach hoat dong
+## Cách hoạt động
 
-- Khi client ket noi, server gui toan bo trang thai luoi qua su kien `initGrid`.
-- Khi nguoi dung to mot o, frontend phat su kien `cellClick`.
-- Server cap nhat du lieu grid trong bo nho va broadcast `updateCell` cho toan bo client.
+- Khi client kết nối, server gửi toàn bộ trạng thái lưới qua sự kiện `initGrid`.
+- Khi người dùng tô một ô, frontend phát sự kiện `cellClick`.
+- Server cập nhật dữ liệu grid trong bộ nhớ và broadcast `updateCell` cho toàn bộ client.
 
 ## Build frontend
 
@@ -94,15 +94,15 @@ Frontend mac dinh se chay qua Vite, thuong tai `http://localhost:5173`.
 npm run build
 ```
 
-## Luu y hien tai
+## Lưu ý hiện tại
 
-- Du lieu grid dang duoc luu trong RAM cua server, nen se mat khi restart backend.
-- Frontend hien dang ket noi cung toi `http://localhost:3000`.
-- Kich thuoc world hien tai la `500 x 500` o, moi o co kich thuoc `50px`.
+- Dữ liệu grid đang được lưu trong RAM của server, nên sẽ mất khi restart backend.
+- Frontend hiện đang kết nối cứng tới `http://localhost:3000`.
+- Kích thước world hiện tại là `500 x 500` ô, mỗi ô có kích thước `50px`.
 
-## Huong phat trien tiep theo
+## Hướng phát triển tiếp theo
 
-- Luu grid vao database hoac file de co persistence.
-- Them xac thuc nguoi dung va gioi han toc do to mau.
-- Cho phep chon kich thuoc brush hoac bang mau dong.
-- Tach cau hinh moi truong frontend/backend bang bien moi truong.
+- Lưu grid vào database hoặc file để có persistence.
+- Thêm xác thực người dùng và giới hạn tốc độ tô màu.
+- Cho phép chọn kích thước brush hoặc bảng màu động.
+- Tách cấu hình môi trường frontend/backend bằng biến môi trường.
