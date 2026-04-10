@@ -1,73 +1,108 @@
-# React + TypeScript + Vite
+# PixelWorld
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PixelWorld la mot ung dung canvas pixel thoi gian thuc, noi nhieu nguoi dung co the to mau len cung mot luoi va thay doi duoc dong bo ngay qua Socket.IO.
 
-Currently, two official plugins are available:
+## Tinh nang chinh
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Hien thi world dang luoi pixel kich thuoc lon bang `PixiJS`.
+- Di chuyen va zoom canvas voi `pixi-viewport`.
+- Chon mau tu bang 10 mau co dinh.
+- Bat/tat che do ve truc tiep tren giao dien.
+- Dong bo thay doi giua nhieu client theo thoi gian thuc bang `Socket.IO`.
 
-## React Compiler
+## Cong nghe su dung
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Frontend: `React 19`, `TypeScript`, `Vite`
+- Rendering: `PixiJS`, `@pixi/react`, `pixi-viewport`
+- Realtime: `socket.io-client`
+- Backend: `Node.js`, `Express`, `Socket.IO`
 
-## Expanding the ESLint configuration
+## Cau truc project
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+PixelWorld/
+|-- src/
+|   |-- components/CanvasView.tsx   # Canvas chinh, xu ly ve va socket
+|   |-- App.tsx                     # UI chon mau, bat/tat che do ve
+|   |-- main.tsx                    # Entry frontend
+|-- public/
+|-- Server/
+|   |-- server.js                   # Realtime server voi Express + Socket.IO
+|   |-- package.json
+|-- package.json                    # Cau hinh frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Yeu cau moi truong
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `Node.js` 18 tro len
+- `npm` 9 tro len
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Cai dat
+
+Cai dependencies cho frontend:
+
+```bash
+npm install
 ```
+
+Cai dependencies cho backend:
+
+```bash
+cd Server
+npm install
+```
+
+## Chay project o moi truong local
+
+Mo 2 terminal rieng.
+
+Terminal 1, chay backend:
+
+```bash
+cd Server
+npm start
+```
+
+Backend se chay tai `http://localhost:3000`.
+
+Terminal 2, chay frontend:
+
+```bash
+npm run dev
+```
+
+Frontend mac dinh se chay qua Vite, thuong tai `http://localhost:5173`.
+
+## Cach su dung
+
+- Mo ung dung tren trinh duyet.
+- Nhan nut cay but o goc phai tren de bat che do ve.
+- Chon mau o thanh cong cu goc trai tren.
+- Click vao o de to mau.
+- Co the giu `Space` va re chuot de to lien tuc tren nhieu o.
+- Cac client khac dang ket noi se nhan duoc cap nhat gan nhu ngay lap tuc.
+
+## Cach hoat dong
+
+- Khi client ket noi, server gui toan bo trang thai luoi qua su kien `initGrid`.
+- Khi nguoi dung to mot o, frontend phat su kien `cellClick`.
+- Server cap nhat du lieu grid trong bo nho va broadcast `updateCell` cho toan bo client.
+
+## Build frontend
+
+```bash
+npm run build
+```
+
+## Luu y hien tai
+
+- Du lieu grid dang duoc luu trong RAM cua server, nen se mat khi restart backend.
+- Frontend hien dang ket noi cung toi `http://localhost:3000`.
+- Kich thuoc world hien tai la `500 x 500` o, moi o co kich thuoc `50px`.
+
+## Huong phat trien tiep theo
+
+- Luu grid vao database hoac file de co persistence.
+- Them xac thuc nguoi dung va gioi han toc do to mau.
+- Cho phep chon kich thuoc brush hoac bang mau dong.
+- Tach cau hinh moi truong frontend/backend bang bien moi truong.
